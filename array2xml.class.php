@@ -12,22 +12,31 @@
  */
 
 class Array2XML{
-  
+  	
+  	// wyjsciowy kod XML
 	protected $_output = '';
 	
 	public function __construct($root_node, $array)
 	{
+		// dodanie naglowka i parsowanie tablicy
 		$this->_output = '<?xml version="1.0" encoding="utf-8"?>'.$this->parse_array($root_node, $array);
 	}
 	
 	private function parse_array($name, $obj)
-	{		
+	{
+		// lista atrybutow elementu
 		$attributes = array();
+		
+		// zawartosc elementu
 		$content = '';
 		
-		if(! self::is_valid_tag($name)){
+		// jesli nazwa tagu jest nieprawidlowa
+		if(! self::is_valid_tag($name))
+		{
+			// wyrzuc wyjatek
 			throw new Exception('Invalid tagname \''.$name.'\'');
 		}
+		
 		
 		if(is_array($obj))
 		{
@@ -73,7 +82,7 @@ class Array2XML{
 		}
 		elseif(self::is_bool($obj))
 		{
-			return self::bool_to_string($obj);
+			return $this->parse_array($name, self::bool_to_string($obj));
 		}
 		else
 		{
@@ -166,7 +175,6 @@ class Array2XML{
 	private static function is_valid_tag($tag)
 	{
         $pattern = '/^[a-z_]+[a-z0-9\:\-\.\_]*[^:]*$/i';
-		//echo $tag;
         return preg_match($pattern, $tag, $matches) && $matches[0] == $tag;
     }
 }
