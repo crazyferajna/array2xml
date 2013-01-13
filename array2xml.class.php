@@ -7,36 +7,52 @@
  * 
  * by K13 aka crazyferajna
  * 
- * Copyright (c) 2012
+ * Copyright (c) 2012-2013
  * 
  */
 
 class Array2XML{
-  	
-  	// wyjsciowy kod XML
 	protected $_output = '';
 	
+	/*
+	 * Konstruktor klasy
+	 * 
+	 * @param	string	$root_node	nazwa głównego tagu generowanego dokumentu
+	 * @param	array	$array		tablica do konwersji
+	 * @return	string
+	 */
 	public function __construct($root_node, $array)
 	{
-		// dodanie naglowka i parsowanie tablicy
 		$this->_output = '<?xml version="1.0" encoding="utf-8"?>'.$this->parse_array($root_node, $array);
 	}
 	
-	private function parse_array($name, $obj)
+	/*
+	 * Metoda magiczna rzutowania do stringa
+	 * 
+	 * @return	string
+	 */
+	public function __toString()
 	{
-		// lista atrybutow elementu
+		return $this->_output;
+	}
+	
+	/*
+	 * Główna funkcja parsująca obiekt do kodu XML
+	 * 
+	 * @param	string	$root_node	nazwa głównego tagu generowanego dokumentu
+	 * @param	mixed	$obj		tablica do konwersji
+	 * @return	string
+	 */
+	private function parse_array($root_node, $obj)
+	{
 		$attributes = array();
 		
-		// zawartosc elementu
 		$content = '';
 		
-		// jesli nazwa tagu jest nieprawidlowa
-		if(! self::is_valid_tag($name))
+		if(! self::is_valid_tag($root_node))
 		{
-			// wyrzuc wyjatek
-			throw new Exception('Invalid tagname \''.$name.'\'');
+			throw new Exception('Invalid tagname \''.$root_node.'\'');
 		}
-		
 		
 		if(is_array($obj))
 		{
@@ -45,7 +61,6 @@ class Array2XML{
 				switch(strtolower($node))
 				{
 				case '@attributes':
-					
 					$attributes = $value;
 					break;
 				case '@value':
@@ -72,38 +87,45 @@ class Array2XML{
 			
 			if(strlen($content) == 0)
 			{
-				return '<'.$name.self::attributes($attributes, true).' />';
+				return '<'.$root_node.self::attributes($attributes, true).' />';
 			}
 			else
 			{
-				return '<'.$name.self::attributes($attributes, true).'>'.$content.'</'.$name.'>';
+				return '<'.$root_node.self::attributes($attributes, true).'>'.$content.'</'.$root_node.'>';
 			}
 			
 		}
-		elseif(self::is_bool($obj))
+		elseif(is_bool($obj))
 		{
-			return $this->parse_array($name, self::bool_to_string($obj));
+			return $this->parse_array($root_node, self::bool_to_string($obj));
 		}
 		else
 		{
 			if(strlen($obj) == 0)
 			{
-				return '<'.$name.' />';
+				return '<'.$root_node.' />';
 			}
 			else
 			{
-				return '<'.$name.'>'.$obj.'</'.$name.'>';
+				return '<'.$root_node.'>'.$obj.'</'.$root_node.'>';
 			}
 		}
 	}
 	
-	public static function attributes($array, $space = false)
+	/*
+	 * Funkcja parsująca tablicę parametrów do postaci stringa
+	 * 
+	 * @param	array	$attibutes	lista atrybutów
+	 * @param	bool	$space		czy dodać spację na początku wygenerowanego stringa?
+	 * @return	string
+	 */
+	public static function attributes($attibutes, $space = false)
 	{
 		$output = array();
 		
-		foreach($array as $name => $value)
+		foreach($attibutes as $name => $value)
 		{
-			if(self::is_bool($value))
+			if(is_bool($value))
 			{
 				$value = self::bool_to_string($value);
 			}
@@ -130,31 +152,24 @@ class Array2XML{
 		}
 	}
 	
-	public function __toString()
+	
+	/*
+	 * Zamienia typ boolean na string
+	 * 
+	 * @param	boolean	$bool
+	 * @return	string
+	 */
+	private static function bool_to_string($bool)
 	{
-		return $this->_output;
+		return $bool ? 'true' : 'false';
 	}
 	
-	private static function is_array($obj)
-	{
-		return is_array($obj);
-	}
-	
-	private static function is_integer($obj)
-	{
-		return is_int($obj);
-	}
-	
-	private static function is_bool($obj)
-	{
-		return is_bool($obj);
-	}
-	
-	private static function bool_to_string($obj)
-	{
-		return $obj ? 'true' : 'false';
-	}
-		
+	/*
+	 * Sprawdza czy obiekt jest tablicą węzłów dokumentu
+	 * 
+	 * @param	mixed	$obj
+	 * @return	bool
+	 */
 	public function is_list($obj)
 	{
 		if(! is_array($obj))
@@ -164,7 +179,7 @@ class Array2XML{
 		
 		foreach($obj as $index => $element)
 		{
-			if(! self::is_integer($index) || ! self::is_array($element))
+			if(! is_int($index) || ! is_array($element))
 			{
 				return false;
 			}
@@ -172,6 +187,12 @@ class Array2XML{
 		return true;
 	}
 	
+	/*
+	 * Sprawdza czy string jest dozwoloną nazwą tagu
+	 * 
+	 * @param	string	$tag
+	 * @return	bool
+	 */
 	private static function is_valid_tag($tag)
 	{
         $pattern = '/^[a-z_]+[a-z0-9\:\-\.\_]*[^:]*$/i';
